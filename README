@@ -1,0 +1,17 @@
+gcc-color
+
+Filter gcc output for warnings and errors and colors accordingly.
+
+Install instructions
+* Get the full name of your compiler
+  Eg. i686-pc-linux-gnu-gcc, x86_64-pc-linux-gnu-g++ etc.
+* Somewhere in your path create symlinks to gcc-compiler-color.py named after
+  the full name but with -color appended.
+  Eg. i686-pc-linux-gnu-gcc-color, x86_64-pc-linux-gnu-g++-color
+* If you intend to use this when compiling autotools projects etc you export CC
+  and CXX set to the previously added "compilers".
+
+gcc-compiler-color.py calls the compiler bases on the name of the symlink.
+Eg. x86_64-pc-linux-gnu-g++-color call x86_64-pc-linux-gnu-g++
+
+If you would like to disable colors for a single session just export NOCOLOR.
