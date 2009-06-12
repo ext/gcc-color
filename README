@@ -14,4 +14,4 @@ Install instructions
 gcc-compiler-color.py calls the compiler bases on the name of the symlink.
 Eg. x86_64-pc-linux-gnu-g++-color call x86_64-pc-linux-gnu-g++
 
-If you would like to disable colors for a single session just export NOCOLOR.
+If you would like to disable colors for a single session just export NOCOLOR set to yes.
