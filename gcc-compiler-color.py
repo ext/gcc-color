@@ -41,7 +41,9 @@ stdout_lines = stdout.split("\n")
 if filter:
 	for line in stdout_lines[:-1]:
 		tokens = line.split(' ')
-		if tokens[1] in ['fel:', 'error:']:
+		if len(tokens) < 2:
+			print line
+		elif tokens[1] in ['fel:', 'error:']:
 			print "\033[01;31m" + line + "\033[0m"
 			status = 2
 		elif tokens[1] in ['varning:', 'warning:']:
