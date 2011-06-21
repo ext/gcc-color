@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-
 #
-# Copyright (c) 2009, David Sveningsson <ext-spamtag@sidvind.com>
+# Copyright (c) 2009-2011, David Sveningsson <ext-gcc-color@sidvind.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
@@ -14,7 +13,8 @@
 #
 
 from __future__ import print_function
-import sys, os, subprocess
+import sys, os, subprocess, traceback
+from select import select
 
 path, compiler = os.path.split(sys.argv[0])
 if compiler[-5:] == 'color':
@@ -34,29 +34,63 @@ if 'NOCOLOR' in os.environ:
 	elif os.environ['NOCOLOR'] == 'true':
 		filter = False
 
-argv = [compiler] + sys.argv[1:]
+p = subprocess.Popen(
+		args=[compiler] + sys.argv[1:],
+		stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+		cwd=os.getcwd(), env=os.environ,
+		shell=False
+)
 
-p = subprocess.Popen(args=argv, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=os.getcwd(), env=os.environ, shell=False)
+bold          = "\033[01m"
+red_light     = "\033[00;31m"
+red_bold      = "\033[01;31m"
+magenta_light = "\033[00;35m"
+magenta_bold  = "\033[01;35m"
+yellow_light  = "\033[00;33m"
+yellow_bold   = "\033[01;33m"
+reset         = "\033[0m"
 
-while(p.returncode == None):
-	stdout, stderr = p.communicate()
+while True:
+	p.poll()
+	r,w,x = select([p.stdout], [], [], 1.0)
+	if len(r) == 0:
+		continue
 
-stdout_lines = stdout.splitlines()
+	line = p.stdout.readline()
+	if len(line) == 0: # EOF
+		if p.returncode is None:
+			continue
+		else:
+			break
+	line = line[:-1]
 
-if filter:
-	for line in stdout_lines[:-1]:
+	if not filter:
+		print(line)
+		continue
+
+	try:
 		tokens = line.split(' ')
 		if len(tokens) < 2:
 			print(line)
+		elif tokens[1] in ['undefined']:
+			lline = ' '.join(tokens[1:])
+			print(bold + tokens[0], red_bold + lline + reset)
 		elif tokens[1] in ['fel:', 'error:']:
-			print("\033[01;31m" + line + "\033[0m")
-			status = 2
+			lline = ' '.join(tokens[2:])
+			print(bold + tokens[0], tokens[1], red_bold + lline + reset)
 		elif tokens[1] in ['varning:', 'warning:']:
-			print("\033[01;33m" + line + "\033[0m")
+			lline = ' '.join(tokens[2:])
+			print(bold + tokens[0], tokens[1], yellow_bold + lline + reset)
+		elif tokens[1] in ['In'] and tokens[2] in ['function']:
+			lline = ' '.join(tokens[3:])
+			print(tokens[0], tokens[1], tokens[2], magenta_bold + lline + reset)
+		elif tokens[1] in ['In'] and tokens[2] in ['member'] and tokens[3] in ['function']:
+			lline = ' '.join(tokens[4:])
+			print(tokens[0], tokens[1], tokens[2], tokens[3], magenta_bold + lline + reset)
 		else:
 			print(line)
-else:
-	for line in stdout_lines[:-1]:
+	except:
+		traceback.print_exc()
 		print(line)
 
 sys.exit(p.returncode)
